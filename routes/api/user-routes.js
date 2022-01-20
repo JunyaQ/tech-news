@@ -55,6 +55,7 @@ router.post('/', (req, res) => {
 router.put('/:id', (req, res) => {//req body is the new data
     User.update(req.body,{//we pass in req.body to provide the new data we want to use in the update and req.params.id to indicate where exactly we want that new data to be used
         // if req.body has exact key/value pairs to match the model, you can juust use req.body
+        individualHooks: true,
     where:{// where id =1
         id:req.params.id//UPDATE users SET username="", email='' password='' WHERE id = 1
     }
@@ -93,4 +94,25 @@ router.delete('/:id', (req, res) => {
     })
 });
 
+router.post('/login', (req, res) => {
+    // expects {email: 'lernantino@gmail.com', password: 'password1234'}
+    User.findOne({
+      where: {
+        email: req.body.email
+      }
+    }).then(dbUserData => {
+      if (!dbUserData) {
+        res.status(400).json({ message: 'No user with that email address!' });
+        return;
+      }
+      // validation
+      const validPassword = dbUserData.checkPassword(req.body.password);// check password by using method inside user.js
+      if (!validPassword) {// if password return false 
+        res.status(400).json({ message: 'Incorrect password!' });
+        return;
+      }
+      // if return true
+      res.json({ user: dbUserData, message: 'You are now logged in!' });
+    });
+  });
 module.exports = router;
